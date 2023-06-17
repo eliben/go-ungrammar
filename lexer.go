@@ -1,6 +1,9 @@
 package ungrammar
 
-import "fmt"
+import (
+	"fmt"
+	"unicode/utf8"
+)
 
 type location struct {
 	line   int
@@ -57,13 +60,14 @@ type lexer struct {
 	// Current rune.
 	r rune
 
-	// Offest of the current rune in buf.
+	// Offset of the current rune in buf.
 	rpos int
 
 	// Offset of the next rune in buf.
 	nextpos int
 
 	lineNum int
+	colNum  int
 }
 
 func newLexer(buf string) *lexer {
@@ -73,9 +77,117 @@ func newLexer(buf string) *lexer {
 		rpos:    0,
 		nextpos: 0,
 		lineNum: 1,
+		colNum:  1,
 	}
 
-	// Prime the lexer by calling .next
-	lex.next()
+	lex.advance()
 	return &lex
+}
+
+func (lex *lexer) nextToken() token {
+	lex.skipNontokens()
+
+	if lex.r < 0 {
+		return token{EOF, "", lex.lineNum}
+	} else if isIdChar(lex.r) {
+		return lex.scanId()
+	}
+	switch lex.r {
+	case '=':
+		return lex.emitToken(EQ, "=")
+	case '*':
+		return lex.emitToken(STAR, "*")
+	case '?':
+		return lex.emitToken(QMARK, "?")
+	case '(':
+		return lex.emitToken(LPAREN, "(")
+	case ')':
+		return lex.emitToken(RPAREN, ")")
+	case '|':
+		return lex.emitToken(PIPE, "|")
+	case ':':
+		return lex.emitToken(COLON, ":")
+		// TODO handle '
+	}
+
+	return lex.errorToken(fmt.Sprintf("unknown token starting with %q", lex.r))
+}
+
+// advance the lexer's internal state to point to the next rune in the
+// input.
+func (lex *lexer) advance() {
+	if lex.nextpos < len(lex.buf) {
+		lex.rpos = lex.nextpos
+		r, w := rune(lex.buf[lex.nextpos]), 1
+
+		if r >= utf8.RuneSelf {
+			r, w = utf8.DecodeRuneInString(lex.buf[lex.nextpos:])
+		}
+
+		lex.nextpos += w
+		lex.r = r
+	} else {
+		lex.rpos = len(lex.buf)
+		lex.r = -1 // EOF
+	}
+}
+
+func (lex *lexer) peekNext() rune {
+	if lex.nextpos < len(lex.buf) {
+		return rune(lex.buf[lex.nextpos])
+	} else {
+		return -1
+	}
+}
+
+func (lex *lexer) emitToken(name, value) token {
+	return token{
+		name:  name,
+		value: value,
+		loc:   location{}, // TODO fix
+	}
+}
+
+func (lex *lexer) skipNontokens() {
+	for {
+		switch lex.r {
+		case ' ', '\t', '\r':
+			lex.advance()
+		case '\n':
+			lex.lineNum++
+			lex.advance()
+		case '/':
+			if lex.peekNext() == '/' {
+				lex.skipLineComment()
+			}
+		}
+	}
+}
+
+func (lex *lexer) skipLineComment() {
+	for lex.r != '\n' && lex.r > 0 {
+		lex.advance()
+	}
+}
+
+func (lex *lexer) scanId() token {
+	startpos := lex.rpos
+	for isIdChar(lex.r) {
+		lex.advance()
+	}
+	return self.emitToken(ID, lex.buf[startpos:lex.rpos])
+}
+
+func isIdChar(r rune) bool {
+	if r >= 256 {
+		return false
+	}
+
+	const mask = 0 |
+		(1<<26-1)<<'A' |
+		(1<<26-1)<<'a' |
+		1<<'_'
+
+	b := byte(r)
+	return (uint64(1)<<b)&(mask&(1<<64-1))|(uint64(1)<<(b-64))&(mask>>64) != 0
 }
