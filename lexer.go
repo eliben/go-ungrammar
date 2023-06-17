@@ -6,19 +6,24 @@ import (
 	"unicode/utf8"
 )
 
-type location struct {
-	line   int
-	column int
-}
-
-// tokenName is a type for describing tokens mnemonically.
-type tokenName int
-
+// token represents a Ungrammar language token - it has a name (one of the
+// constants declared below), string value and a location.
+//
+// The term "token" is slightly overloaded in this file; in Ungrammar, a quoted
+// string literal is also called a "Token" -- this is just one of the kinds of
+// tokens this lexer returns.
 type token struct {
 	name  tokenName
 	value string
 	loc   location
 }
+
+type location struct {
+	line   int
+	column int
+}
+
+type tokenName int
 
 const (
 	// Special tokens
@@ -57,11 +62,10 @@ func (tok token) String() string {
 	return fmt.Sprintf("token{%s, '%s', (%v, %v)}", tokenNames[tok.name], tok.value, tok.loc.line, tok.loc.column)
 }
 
-// lexer
+// lexer provides lexical scanning of text into Ungrammar tokens.
 //
 // Create a new lexer with newLexer and then call nextToken repeatedly to get
-// tokens from the stream. The lexer will return a token with the name EOF when
-// done.
+// tokens from the stream. The lexer will return an EOF token when done.
 type lexer struct {
 	buf string
 
@@ -74,64 +78,74 @@ type lexer struct {
 	// Offset of the next rune in buf.
 	nextpos int
 
-	lineNum int
-	colNum  int
+	// location of r
+	loc location
 }
 
+// newLexer creates a new lexer for the given string.
 func newLexer(buf string) *lexer {
 	lex := lexer{
 		buf:     buf,
 		r:       -1,
 		rpos:    0,
 		nextpos: 0,
-		lineNum: 1,
-		colNum:  1,
+
+		// column starts at 0 since advace() always increments it before we have
+		// the first rune in r
+		loc: location{1, 0},
 	}
 
 	lex.advance()
 	return &lex
 }
 
+// nextToken returns the next token in the input string.
 func (lex *lexer) nextToken() token {
 	lex.skipNontokens()
 
+	rloc := lex.loc
 	if lex.r < 0 {
-		return lex.emitToken(EOF, "")
+		return token{EOF, "", rloc}
 	} else if isIdChar(lex.r) {
 		return lex.scanNode()
 	}
 
 	switch lex.r {
 	case '\'':
-		return lex.scanToken()
+		return lex.scanQuoted()
 	case '=':
 		lex.advance()
-		return lex.emitToken(EQ, "=")
+		return token{EQ, "=", rloc}
 	case '*':
 		lex.advance()
-		return lex.emitToken(STAR, "*")
+		return token{STAR, "*", rloc}
 	case '?':
 		lex.advance()
-		return lex.emitToken(QMARK, "?")
+		return token{QMARK, "?", rloc}
 	case '(':
 		lex.advance()
-		return lex.emitToken(LPAREN, "(")
+		return token{LPAREN, "(", rloc}
 	case ')':
 		lex.advance()
-		return lex.emitToken(RPAREN, ")")
+		return token{RPAREN, ")", rloc}
 	case '|':
 		lex.advance()
-		return lex.emitToken(PIPE, "|")
+		return token{PIPE, "|", rloc}
 	case ':':
 		lex.advance()
-		return lex.emitToken(COLON, ":")
+		return token{COLON, ":", rloc}
 	}
 
-	return lex.emitToken(ERROR, fmt.Sprintf("unknown token starting with %q", lex.r))
+	return lex.emitError(fmt.Sprintf("unknown token starting with %q", lex.r), rloc)
 }
 
 // advance the lexer's internal state to point to the next rune in the
-// input.
+// input. advance is responsible for maintaining the main invariant of the
+// lexer: at any point after advance has been called at least once, lex.r
+// is the current token the lexer is looking at; lex.rpos is its offset
+// the string and lex.loc is its location. lex.nextpost is the offset of the
+// next token in the input. When the end of the input is reached, lex.r
+// becomes EOF.
 func (lex *lexer) advance() {
 	if lex.nextpos < len(lex.buf) {
 		lex.rpos = lex.nextpos
@@ -143,12 +157,15 @@ func (lex *lexer) advance() {
 
 		lex.nextpos += w
 		lex.r = r
+		lex.loc.column += 1
 	} else {
 		lex.rpos = len(lex.buf)
 		lex.r = -1 // EOF
 	}
 }
 
+// peekNext looks at the next rune in the input, after lex.r. It only works
+// correctly for rune values < 128.
 func (lex *lexer) peekNext() rune {
 	if lex.nextpos < len(lex.buf) {
 		return rune(lex.buf[lex.nextpos])
@@ -157,11 +174,11 @@ func (lex *lexer) peekNext() rune {
 	}
 }
 
-func (lex *lexer) emitToken(name tokenName, value string) token {
+func (lex *lexer) emitError(msg string, loc location) token {
 	return token{
-		name:  name,
-		value: value,
-		loc:   location{}, // TODO fix
+		name:  ERROR,
+		value: msg,
+		loc:   loc,
 	}
 }
 
@@ -171,7 +188,9 @@ func (lex *lexer) skipNontokens() {
 		case ' ', '\t', '\r':
 			lex.advance()
 		case '\n':
-			lex.lineNum++
+			lex.loc.line++
+			// Set column to 0 because advance() immediately increments it
+			lex.loc.column = 0
 			lex.advance()
 		case '/':
 			if lex.peekNext() == '/' {
@@ -190,28 +209,30 @@ func (lex *lexer) skipLineComment() {
 }
 
 func (lex *lexer) scanNode() token {
+	startloc := lex.loc
 	startpos := lex.rpos
 	for isIdChar(lex.r) {
 		lex.advance()
 	}
-	return lex.emitToken(NODE, lex.buf[startpos:lex.rpos])
+	return token{NODE, lex.buf[startpos:lex.rpos], startloc}
 }
 
-func (lex *lexer) scanToken() token {
+func (lex *lexer) scanQuoted() token {
+	startloc := lex.loc
 	lex.advance() // skip leading quote
 	var tokbuf strings.Builder
 	for {
 		if lex.r == '\'' {
 			lex.advance()
-			return lex.emitToken(TOKEN, tokbuf.String())
+			return token{TOKEN, tokbuf.String(), startloc}
 		} else if lex.r == -1 {
-			return lex.emitToken(ERROR, "unterminated token literal")
+			return lex.emitError("unterminated token literal", startloc)
 		} else if lex.r == '\\' {
 			if pn := lex.peekNext(); pn == '\'' || pn == '\\' {
 				tokbuf.WriteRune(pn)
 				lex.advance()
 			} else {
-				return lex.emitToken(ERROR, "invalid escape in token literal")
+				return lex.emitError("invalid escape in token literal", lex.loc)
 			}
 		} else {
 			tokbuf.WriteRune(lex.r)
