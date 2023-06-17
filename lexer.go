@@ -24,6 +24,9 @@ const (
 	ERROR tokenName = iota
 	EOF
 
+	NODE
+	TOKEN
+
 	EQ
 	STAR
 	PIPE
@@ -37,10 +40,14 @@ var tokenNames = [...]string{
 	ERROR: "ERROR",
 	EOF:   "EOF",
 
+	NODE:  "NODE",
+	TOKEN: "TOKEN",
+
 	EQ:     "EQ",
 	STAR:   "STAR",
 	PIPE:   "PIPE",
 	QMARK:  "QMARK",
+	COLON:  "COLON",
 	LPAREN: "LPAREN",
 	RPAREN: "RPAREN",
 }
@@ -88,29 +95,36 @@ func (lex *lexer) nextToken() token {
 	lex.skipNontokens()
 
 	if lex.r < 0 {
-		return token{EOF, "", lex.lineNum}
+		return lex.emitToken(EOF, "")
 	} else if isIdChar(lex.r) {
 		return lex.scanId()
 	}
 	switch lex.r {
 	case '=':
+		lex.advance()
 		return lex.emitToken(EQ, "=")
 	case '*':
+		lex.advance()
 		return lex.emitToken(STAR, "*")
 	case '?':
+		lex.advance()
 		return lex.emitToken(QMARK, "?")
 	case '(':
+		lex.advance()
 		return lex.emitToken(LPAREN, "(")
 	case ')':
+		lex.advance()
 		return lex.emitToken(RPAREN, ")")
 	case '|':
+		lex.advance()
 		return lex.emitToken(PIPE, "|")
 	case ':':
+		lex.advance()
 		return lex.emitToken(COLON, ":")
 		// TODO handle '
 	}
 
-	return lex.errorToken(fmt.Sprintf("unknown token starting with %q", lex.r))
+	return lex.emitToken(ERROR, fmt.Sprintf("unknown token starting with %q", lex.r))
 }
 
 // advance the lexer's internal state to point to the next rune in the
@@ -140,7 +154,7 @@ func (lex *lexer) peekNext() rune {
 	}
 }
 
-func (lex *lexer) emitToken(name, value) token {
+func (lex *lexer) emitToken(name tokenName, value string) token {
 	return token{
 		name:  name,
 		value: value,
@@ -160,6 +174,8 @@ func (lex *lexer) skipNontokens() {
 			if lex.peekNext() == '/' {
 				lex.skipLineComment()
 			}
+		default:
+			return
 		}
 	}
 }
@@ -175,7 +191,7 @@ func (lex *lexer) scanId() token {
 	for isIdChar(lex.r) {
 		lex.advance()
 	}
-	return self.emitToken(ID, lex.buf[startpos:lex.rpos])
+	return lex.emitToken(NODE, lex.buf[startpos:lex.rpos])
 }
 
 func isIdChar(r rune) bool {

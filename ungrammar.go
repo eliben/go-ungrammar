@@ -37,10 +37,10 @@ type Rep struct {
 	Rule Rule
 }
 
-func (_ Labeled) isRule()
-func (_ Node) isRule()
-func (_ Token) isRule()
-func (_ Seq) isRule()
-func (_ Alt) isRule()
-func (_ Opt) isRule()
-func (_ Rep) isRule()
+func (_ Labeled) isRule() {}
+func (_ Node) isRule()    {}
+func (_ Token) isRule()   {}
+func (_ Seq) isRule()     {}
+func (_ Alt) isRule()     {}
+func (_ Opt) isRule()     {}
+func (_ Rep) isRule()     {}

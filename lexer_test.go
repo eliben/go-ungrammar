@@ -9,7 +9,7 @@ const input = `
 someid
 : ? anotherid
 // comment
-( id3 ) // doc
+( idmore ) // doc
 |
 `
 
@@ -19,6 +19,7 @@ func TestLexer(t *testing.T) {
 
 	for {
 		t := lex.nextToken()
+		fmt.Println(t)
 		if t.name == EOF {
 			break
 		}
