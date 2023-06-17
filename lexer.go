@@ -2,6 +2,7 @@ package ungrammar
 
 import (
 	"fmt"
+	"strings"
 	"unicode/utf8"
 )
 
@@ -97,7 +98,7 @@ func (lex *lexer) nextToken() token {
 	if lex.r < 0 {
 		return lex.emitToken(EOF, "")
 	} else if isIdChar(lex.r) {
-		return lex.scanId()
+		return lex.scanNode()
 	}
 
 	switch lex.r {
@@ -124,7 +125,6 @@ func (lex *lexer) nextToken() token {
 	case ':':
 		lex.advance()
 		return lex.emitToken(COLON, ":")
-		// TODO handle '
 	}
 
 	return lex.emitToken(ERROR, fmt.Sprintf("unknown token starting with %q", lex.r))
@@ -189,7 +189,7 @@ func (lex *lexer) skipLineComment() {
 	}
 }
 
-func (lex *lexer) scanId() token {
+func (lex *lexer) scanNode() token {
 	startpos := lex.rpos
 	for isIdChar(lex.r) {
 		lex.advance()
@@ -199,14 +199,23 @@ func (lex *lexer) scanId() token {
 
 func (lex *lexer) scanToken() token {
 	lex.advance() // skip leading quote
-	startpos := lex.rpos
+	var tokbuf strings.Builder
 	for {
 		if lex.r == '\'' {
-			endpos := lex.rpos
 			lex.advance()
-			return lex.emitToken(TOKEN, lex.buf[startpos:endpos])
+			return lex.emitToken(TOKEN, tokbuf.String())
+		} else if lex.r == -1 {
+			return lex.emitToken(ERROR, "unterminated token literal")
+		} else if lex.r == '\\' {
+			if pn := lex.peekNext(); pn == '\'' || pn == '\\' {
+				tokbuf.WriteRune(pn)
+				lex.advance()
+			} else {
+				return lex.emitToken(ERROR, "invalid escape in token literal")
+			}
+		} else {
+			tokbuf.WriteRune(lex.r)
 		}
-		// TODO handle unclosed, EOF, and escaping
 		lex.advance()
 	}
 }

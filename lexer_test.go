@@ -10,6 +10,7 @@ someid
 : ? anotherid 'sometok'
 // comment
 ( idmore 'tt tt' ) // doc
+'tt\'q' 'tt\\s'
 |
 `
 
