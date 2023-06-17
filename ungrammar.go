@@ -1,5 +1,9 @@
 package ungrammar
 
+type Grammar struct {
+	Rules map[string]Rule
+}
+
 type Rule interface {
 	isRule()
 }
@@ -11,7 +15,6 @@ type Labeled struct {
 
 type Node struct {
 	Name string
-	Rule Rule
 }
 
 type Token struct {
