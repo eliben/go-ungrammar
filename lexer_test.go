@@ -1,7 +1,6 @@
 package ungrammar
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -20,14 +19,36 @@ someid
 
 	for {
 		t := lex.nextToken()
-		fmt.Println(t)
+		toks = append(toks, t)
 		if t.name == EOF {
 			break
 		}
-		toks = append(toks, t)
 	}
 
-	fmt.Println(toks)
+	wantToks := []token{
+		token{NODE, "someid", location{2, 1}},
+		token{COLON, ":", location{3, 1}},
+		token{QMARK, "?", location{3, 3}},
+		token{NODE, "anotherid", location{3, 5}},
+		token{TOKEN, "sometok", location{3, 15}},
+		token{LPAREN, "(", location{5, 26}},
+		token{NODE, "idmore", location{5, 28}},
+		token{TOKEN, "tt tt", location{5, 35}},
+		token{RPAREN, ")", location{5, 43}},
+		token{TOKEN, `tt'q`, location{6, 1}},
+		token{TOKEN, `tt\s`, location{6, 9}},
+		token{PIPE, "|", location{7, 1}},
+		token{EOF, "", location{8, 0}},
+	}
+
+	if len(wantToks) != len(toks) {
+		t.Fatalf("length mismatch wantToks=%v, toks=%v", len(wantToks), len(toks))
+	}
+	for i := 0; i < len(wantToks); i++ {
+		if wantToks[i] != toks[i] {
+			t.Errorf("mismatch at index %2v: got %v, want %v", i, wantToks[i], toks[i])
+		}
+	}
 }
 
 func TestLexerEOF(t *testing.T) {
@@ -44,3 +65,5 @@ func TestLexerEOF(t *testing.T) {
 		}
 	}
 }
+
+// TODO: test some errors
