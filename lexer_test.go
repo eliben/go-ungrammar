@@ -7,9 +7,9 @@ import (
 
 const input = `
 someid
-: ? anotherid
+: ? anotherid 'sometok'
 // comment
-( idmore ) // doc
+( idmore 'tt tt' ) // doc
 |
 `
 

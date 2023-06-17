@@ -99,7 +99,10 @@ func (lex *lexer) nextToken() token {
 	} else if isIdChar(lex.r) {
 		return lex.scanId()
 	}
+
 	switch lex.r {
+	case '\'':
+		return lex.scanToken()
 	case '=':
 		lex.advance()
 		return lex.emitToken(EQ, "=")
@@ -192,6 +195,20 @@ func (lex *lexer) scanId() token {
 		lex.advance()
 	}
 	return lex.emitToken(NODE, lex.buf[startpos:lex.rpos])
+}
+
+func (lex *lexer) scanToken() token {
+	lex.advance() // skip leading quote
+	startpos := lex.rpos
+	for {
+		if lex.r == '\'' {
+			endpos := lex.rpos
+			lex.advance()
+			return lex.emitToken(TOKEN, lex.buf[startpos:endpos])
+		}
+		// TODO handle unclosed, EOF, and escaping
+		lex.advance()
+	}
 }
 
 func isIdChar(r rune) bool {
