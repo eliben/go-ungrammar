@@ -66,4 +66,38 @@ func TestLexerEOF(t *testing.T) {
 	}
 }
 
-// TODO: test some errors
+func allTokens(lex *lexer) []token {
+	var toks []token
+	for {
+		t := lex.nextToken()
+		toks = append(toks, t)
+		if t.name == EOF {
+			break
+		}
+	}
+	return toks
+}
+
+func TestLexerError(t *testing.T) {
+	var tests = []struct {
+		input         string
+		errorIndex    int
+		errorValue    string
+		errorLocation location
+	}{
+		{`hello $ bye`, 1, `unknown token starting with '$'`, location{1, 7}},
+		{`hello | $no`, 2, `unknown token starting with '$'`, location{1, 9}},
+		{`he '202020`, 1, `unterminated token literal`, location{1, 4}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			lex := newLexer(tt.input)
+			toks := allTokens(lex)
+			gotTok := toks[tt.errorIndex]
+			if gotTok.name != ERROR || gotTok.value != tt.errorValue || gotTok.loc != tt.errorLocation {
+				t.Errorf("got token %s, want ERROR with value=%q loc=%v", gotTok, tt.errorValue, tt.errorLocation)
+			}
+		})
+	}
+}

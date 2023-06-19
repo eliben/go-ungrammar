@@ -134,9 +134,11 @@ func (lex *lexer) nextToken() token {
 	case ':':
 		lex.advance()
 		return token{COLON, ":", rloc}
+	default:
+		errtok := lex.emitError(fmt.Sprintf("unknown token starting with %q", lex.r), rloc)
+		lex.advance()
+		return errtok
 	}
-
-	return lex.emitError(fmt.Sprintf("unknown token starting with %q", lex.r), rloc)
 }
 
 // advance the lexer's internal state to point to the next rune in the
@@ -228,12 +230,9 @@ func (lex *lexer) scanQuoted() token {
 		} else if lex.r == -1 {
 			return lex.emitError("unterminated token literal", startloc)
 		} else if lex.r == '\\' {
-			if pn := lex.peekNext(); pn == '\'' || pn == '\\' {
-				tokbuf.WriteRune(pn)
-				lex.advance()
-			} else {
-				return lex.emitError("invalid escape in token literal", lex.loc)
-			}
+			// Skip the backslash and write the rune following it into the buffer.
+			lex.advance()
+			tokbuf.WriteRune(lex.r)
 		} else {
 			tokbuf.WriteRune(lex.r)
 		}
