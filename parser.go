@@ -61,7 +61,25 @@ func (p *parser) eof() bool {
 }
 
 func (p *parser) parseNamedRule() (string, Rule) {
+	if p.tok.name == NODE {
+		nodeName := p.tok.value
+		p.advance()
+		if p.tok.name == EQ {
+			p.advance()
+			rule := p.parseRule()
+			return nodeName, rule
+		}
+	}
+	p.synchronize()
 	return "", nil
+}
+
+func (p *parser) parseRule() Rule {
+	return nil
+}
+
+func (p *parser) synchronize() {
+
 }
 
 func (p *parser) emitError(loc location, msg string) {
