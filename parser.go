@@ -25,16 +25,20 @@ func (p *parser) parseGrammar() (*Grammar, error) {
 	rules := make(map[string]Rule)
 	for !p.eof() {
 		name, rule := p.parseNamedRule()
-		if _, found := rules[name]; ok {
-			j
+		if _, found := rules[name]; found {
+			p.emitError(rule.Location(), fmt.Sprintf("duplicate rule name %v", name))
 		}
 		rules[name] = rule
 	}
 
+	grammar := &Grammar{
+		Rules: rules,
+	}
+
 	if len(p.errs) > 0 {
-		return rules, p.errs
+		return grammar, p.errs
 	} else {
-		return rules, nil
+		return grammar, nil
 	}
 }
 
@@ -56,7 +60,8 @@ func (p *parser) eof() bool {
 	return p.tok.name == EOF
 }
 
-func (p *parser) parseNamedRules() map[string]Rule {
+func (p *parser) parseNamedRule() (string, Rule) {
+	return "", nil
 }
 
 func (p *parser) emitError(loc location, msg string) {
