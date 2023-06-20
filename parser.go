@@ -66,7 +66,7 @@ func (p *parser) parseNamedRule() (string, Rule) {
 		p.advance()
 		if p.tok.name == EQ {
 			p.advance()
-			rule := p.parseRule()
+			rule := p.parseAlt()
 			return nodeName, rule
 		}
 	}
@@ -74,12 +74,52 @@ func (p *parser) parseNamedRule() (string, Rule) {
 	return "", nil
 }
 
-func (p *parser) parseRule() Rule {
+// parseAlt parses a top-level rule, the LHS of Node '=' <Rule>. It's
+// potentially a '|'-seprated alternation of sequences.
+func (p *parser) parseAlt() Rule {
+	alts := []Rule{p.parseSeq()}
+	for p.tok.name == PIPE {
+		p.advance()
+		alts = append(alts, p.parseSeq())
+	}
+	if len(alts) == 1 {
+		return alts[0]
+	} else {
+		return &Alt{alts}
+	}
+}
+
+// parseSeq parses a sequence of single rules.
+func (p *parser) parseSeq() Rule {
+	seq := []Rule{p.parseSingleRule()}
+
+	for {
+		sr := p.parseSingleRule()
+		if sr == nil {
+			break
+		}
+		seq = append(seq, sr)
+	}
+	if len(seq) == 1 {
+		return seq[0]
+	} else {
+		return &Seq{seq}
+	}
+}
+
+func (p *parser) parseSingleRule() Rule {
 	return nil
 }
 
+// synchronize consumes tokens until it finds a safe place to restart parsing.
+// It tries to find the next Node '=' where a new named rule can be defined.
 func (p *parser) synchronize() {
-
+	for !p.eof() {
+		if p.tok.name == NODE && p.nextTok.name == EQ {
+			return
+		}
+		p.advance()
+	}
 }
 
 func (p *parser) emitError(loc location, msg string) {
