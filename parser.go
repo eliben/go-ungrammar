@@ -60,6 +60,9 @@ func (p *parser) eof() bool {
 	return p.tok.name == EOF
 }
 
+// parseNamedRule parses a top-level named rule: Node '=' <rule>, and returns
+// its name and the rule itself. It returns an empty name and rule if the
+// parser doesn't currently point to a rule.
 func (p *parser) parseNamedRule() (string, Rule) {
 	if p.tok.name == NODE {
 		nodeName := p.tok.value

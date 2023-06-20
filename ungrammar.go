@@ -6,7 +6,10 @@ type Grammar struct {
 
 type Rule interface {
 	Location() location
+	String() string
 }
+
+// TODO: add String methods
 
 type Labeled struct {
 	Label    string
