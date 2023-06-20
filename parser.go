@@ -91,13 +91,15 @@ func (p *parser) parseAlt() Rule {
 
 // parseSeq parses a sequence of single rules.
 func (p *parser) parseSeq() Rule {
+	sr := p.parseSingleRule()
+	if sr == nil {
+		p.emitError(p.tok.loc, fmt.Sprintf("expected rule, got %v", p.tok.value))
+		return nil
+	}
 	seq := []Rule{p.parseSingleRule()}
 
-	for {
-		sr := p.parseSingleRule()
-		if sr == nil {
-			break
-		}
+	for sr != nil {
+		sr = p.parseSingleRule()
 		seq = append(seq, sr)
 	}
 	if len(seq) == 1 {
@@ -107,7 +109,90 @@ func (p *parser) parseSeq() Rule {
 	}
 }
 
+// parseSingleRule parses a single rule atom that's potentially followed by
+// a '?' or '*' quantifier. It can return nil if there are no more single
+// rules to parse.
+//
+// The Ungrammar grammr contains an ambiguity, since named rules are not
+// terminated explicitly, consider:
+//
+//	Foo = Bar Baz
+//	Bob = Rob
+//
+// After "Foo =" we parse a sequence of Bar, Baz, but then we see Bob, which
+// shouldn't be in the sequence, but rather start a new named rule. When we
+// parse a single rule, we look ahead for a '=' and bail if it's found, leaving
+// "Bob =" to a higher-level parser. In that case, nil is returned.
 func (p *parser) parseSingleRule() Rule {
+	atom := p.parseSingleRuleAtom()
+	if atom == nil {
+		return nil
+	}
+	if p.tok.name == QMARK {
+		p.advance()
+		return &Opt{atom}
+	} else if p.tok.name == STAR {
+		p.advance()
+		return &Opt{atom}
+	}
+	return atom
+}
+
+// parseSingleRuleAtom parser a single rule atom - either a node, token, a
+// labeled rule, or a rule in parentheses. See the comment on parseSingleRule
+// for the grammar ambiguity this has to handle.
+func (p *parser) parseSingleRuleAtom() Rule {
+	switch p.tok.name {
+	case NODE:
+		// Lookahead to see if this is actually the beginning of the next top-level
+		// rule definition, and bail if yes.
+		if p.nextTok.name == EQ {
+			return nil
+		} else if p.nextTok.name == COLON {
+			labelTok := p.tok
+			// This is a labeled rule and we've parsed "lalel:", now parse the rule.
+			p.advance()
+			r := p.parseSingleRule()
+			if r == nil {
+				p.emitError(p.tok.loc, fmt.Sprintf("expected rule after label, got %v", p.tok.value))
+				p.synchronize()
+			}
+			return &Labeled{
+				Label:    labelTok.value,
+				Rule:     r,
+				labelLoc: labelTok.loc,
+			}
+		} else {
+			tok := p.tok
+			p.advance()
+			return &Node{
+				Name:    tok.value,
+				nameLoc: tok.loc,
+			}
+		}
+	case TOKEN:
+		tok := p.tok
+		p.advance()
+		return &Token{
+			Value:    tok.value,
+			valueLoc: tok.loc,
+		}
+	case LPAREN:
+		// Consume '(' and parse the full rule
+		p.advance()
+		r := p.parseAlt()
+
+		// Expect closing ')', but return the rule anyway if we don't find it.
+		if p.tok.name != RPAREN {
+			p.emitError(p.tok.loc, fmt.Sprintf("expected ')', got %v", p.tok.value))
+			p.synchronize()
+			return r
+		}
+
+		// Consume ')'
+		p.advance()
+		return r
+	}
 	return nil
 }
 
