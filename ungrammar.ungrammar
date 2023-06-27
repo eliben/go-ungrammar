@@ -1,0 +1,18 @@
+/// ungrammar for ungrammar
+/// copied from https://github.com/rust-analyzer/ungrammar/
+
+Grammar =
+  Node *
+
+Node =
+  name:'ident' '=' Rule
+
+Rule =
+  'ident'
+| 'token_ident'
+| Rule *
+| Rule ( '|' Rule) *
+| Rule '?'
+| Rule '*'
+| '(' Rule ')'
+| label:'ident' ':' Rule

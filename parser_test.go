@@ -2,6 +2,7 @@ package ungrammar
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"testing"
@@ -61,20 +62,53 @@ func TestParserTable(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
+			gotRules := grammarToStrings(g)
 
-			var gotRules []string
-			for k, v := range g.Rules {
-				gotRules = append(gotRules, fmt.Sprintf("%s: %s", k, v))
-			}
-			sort.Strings(gotRules)
 			sort.Strings(tt.wantRules)
-
 			if !slicesEqual(gotRules, tt.wantRules) {
 				t.Errorf("mismatch got != want:\n%v", displaySliceDiff(gotRules, tt.wantRules))
 			}
 		})
 	}
 }
+
+// grammarToStrings takes a Grammar's string representation and splits it into
+// a sorted slice of strings (one per top-level rule) suitable for testing.
+func grammarToStrings(g *Grammar) []string {
+	ss := strings.Split(strings.TrimRight(g.String(), "\n"), "\n")
+	sort.Strings(ss)
+	return ss
+}
+
+// Check that we can read/parse ungrammar.ungrammar with some basic sanity
+// checking tests.
+func TestUngrammarFile(t *testing.T) {
+	contents, err := os.ReadFile("./ungrammar.ungrammar")
+	if err != nil {
+		t.Error(err)
+	}
+
+	p := newParser(string(contents))
+	g, err := p.parseGrammar()
+	if err != nil {
+		t.Error(err)
+	}
+
+	// TODO: use grammarToStrings here for a real test... or just add it as one
+	// of the table tests somehow??
+	// abstract away the grammar --> string thing and use it here too,
+	// instead of this!
+	if len(g.Rules) != 3 {
+		t.Errorf("grammar got %v rules, want 3", len(g.Rules))
+	}
+
+	ruleAlt := g.Rules["Rule"].(*Alt)
+	if len(ruleAlt.Rules) != 8 {
+		t.Errorf("Rule got %v rules, want 8", len(ruleAlt.Rules))
+	}
+}
+
+// TODO test errors, including lexer errors
 
 func displaySliceDiff[T any](got []T, want []T) string {
 	maxLen := 0
