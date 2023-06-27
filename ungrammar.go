@@ -103,7 +103,7 @@ func (seq *Seq) String() string {
 	for _, r := range seq.Rules {
 		parts = append(parts, r.String())
 	}
-	return fmt.Sprintf("(%v)", strings.Join(parts, ", "))
+	return fmt.Sprintf("Seq(%v)", strings.Join(parts, ", "))
 }
 
 func (alt *Alt) String() string {
@@ -111,13 +111,13 @@ func (alt *Alt) String() string {
 	for _, r := range alt.Rules {
 		parts = append(parts, r.String())
 	}
-	return fmt.Sprintf("(%v)", strings.Join(parts, " | "))
+	return fmt.Sprintf("Alt(%v)", strings.Join(parts, " | "))
 }
 
 func (opt *Opt) String() string {
-	return opt.Rule.String() + "?"
+	return fmt.Sprintf("Opt(%s)", opt.Rule.String())
 }
 
 func (rep *Rep) String() string {
-	return rep.Rule.String() + "*"
+	return fmt.Sprintf("Rep(%s)", rep.Rule.String())
 }
