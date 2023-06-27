@@ -1,5 +1,10 @@
 package ungrammar
 
+import (
+	"fmt"
+	"strings"
+)
+
 type Grammar struct {
 	Rules map[string]Rule
 }
@@ -9,16 +14,10 @@ type Rule interface {
 	String() string
 }
 
-// TODO: add String methods
-
 type Labeled struct {
 	Label    string
 	Rule     Rule
 	labelLoc location
-}
-
-func (lbl *Labeled) Location() location {
-	return lbl.labelLoc
 }
 
 type Node struct {
@@ -26,47 +25,99 @@ type Node struct {
 	nameLoc location
 }
 
-func (node *Node) Location() location {
-	return node.nameLoc
-}
-
 type Token struct {
 	Value    string
 	valueLoc location
-}
-
-func (tok *Token) Location() location {
-	return tok.valueLoc
 }
 
 type Seq struct {
 	Rules []Rule
 }
 
-func (seq *Seq) Location() location {
-	return seq.Rules[0].Location()
-}
-
 type Alt struct {
 	Rules []Rule
-}
-
-func (alt *Alt) Location() location {
-	return alt.Rules[0].Location()
 }
 
 type Opt struct {
 	Rule Rule
 }
 
-func (opt *Opt) Location() location {
-	return opt.Rule.Location()
-}
-
 type Rep struct {
 	Rule Rule
 }
 
+// Location methods
+
+func (seq *Seq) Location() location {
+	return seq.Rules[0].Location()
+}
+
+func (tok *Token) Location() location {
+	return tok.valueLoc
+}
+
+func (node *Node) Location() location {
+	return node.nameLoc
+}
+
+func (alt *Alt) Location() location {
+	return alt.Rules[0].Location()
+}
+
+func (lbl *Labeled) Location() location {
+	return lbl.labelLoc
+}
+
+func (opt *Opt) Location() location {
+	return opt.Rule.Location()
+}
+
 func (rep *Rep) Location() location {
 	return rep.Rule.Location()
+}
+
+// String methods
+
+func (g *Grammar) String() string {
+	var sb strings.Builder
+	for name, rule := range g.Rules {
+		fmt.Fprintf(&sb, "%s: %s\n", name, rule)
+	}
+	return sb.String()
+}
+
+func (lbl *Labeled) String() string {
+	return fmt.Sprintf("%s:%s", lbl.Label, lbl.Rule)
+}
+
+func (node *Node) String() string {
+	return node.Name
+}
+
+func (tok *Token) String() string {
+	return fmt.Sprintf("'%s'", tok.Value)
+}
+
+func (seq *Seq) String() string {
+	var parts []string
+	for _, r := range seq.Rules {
+		parts = append(parts, r.String())
+	}
+	return fmt.Sprintf("(%v)", strings.Join(parts, ", "))
+}
+
+func (alt *Alt) String() string {
+	var parts []string
+	for _, r := range alt.Rules {
+		parts = append(parts, r.String())
+	}
+	return fmt.Sprintf("(%v)", strings.Join(parts, " | "))
+}
+
+func (opt *Opt) String() string {
+	return opt.Rule.String() + "?"
+}
+
+func (rep *Rep) String() string {
+	return rep.Rule.String() + "*"
 }
