@@ -13,6 +13,7 @@ func TestParserTable(t *testing.T) {
 		input     string
 		wantRules []string
 	}{
+		// Basic rules
 		{`x = mynode`, []string{`x: mynode`}},
 		{`x = (mynode)`, []string{`x: mynode`}},
 		{`x = mynode*`, []string{`x: Rep(mynode)`}},
@@ -21,6 +22,36 @@ func TestParserTable(t *testing.T) {
 		{`x = lab:mynode`, []string{`x: lab:mynode`}},
 		{`x = node 'tok'`, []string{`x: Seq(node, 'tok')`}},
 		{`x = foo | bar`, []string{`x: Alt(foo, bar)`}},
+
+		// Multiple alts/seqs
+		{`x = a | b | c | d | e | f`, []string{`x: Alt(a, b, c, d, e, f)`}},
+		{`x = a b c   d  e     f`, []string{`x: Seq(a, b, c, d, e, f)`}},
+
+		// Precedence between Seq and Alt and using (...)
+		{`x = n | t p`, []string{`x: Alt(n, Seq(t, p))`}},
+		{`x = n i | t p | i b`, []string{`x: Alt(Seq(n, i), Seq(t, p), Seq(i, b))`}},
+		{`x = (n | t) p`, []string{`x: Seq(Alt(n, t), p)`}},
+		{`x = (n | t) p v w | y`, []string{`x: Alt(Seq(Alt(n, t), p, v, w), y)`}},
+		{`x = (n | t)? p`, []string{`x: Seq(Opt(Alt(n, t)), p)`}},
+		{`x = (n | t)? p *`, []string{`x: Seq(Opt(Alt(n, t)), Rep(p))`}},
+
+		// Misc. nesting
+		{`x = (lab:Path '::')? labb:Seg`, []string{`x: Seq(Opt(Seq(lab:Path, '::')), labb:Seg)`}},
+		{`x = '=='? 't' (n (',' n)* ','?)? 't'`, []string{`x: Seq(Opt('=='), 't', Opt(Seq(n, Rep(Seq(',', n)), Opt(','))), 't')`}},
+
+		// Multiple rules
+		{`x = a b y = d`, []string{`x: Seq(a, b)`, `y: d`}},
+		{`x = a b c
+		  y = d | t
+			z = 'tok'`,
+			[]string{`x: Seq(a, b, c)`, `y: Alt(d, t)`, `z: 'tok'`}},
+		{`x =
+			  lab:Rule 'tok'
+
+			Rule =
+			    'tok'
+			  | Rule '*'`,
+			[]string{`x: Seq(lab:Rule, 'tok')`, `Rule: Alt('tok', Seq(Rule, '*'))`}},
 	}
 
 	for _, tt := range tests {
@@ -43,15 +74,6 @@ func TestParserTable(t *testing.T) {
 			}
 		})
 	}
-
-	//p := newParser(input)
-	//g, err := p.parseGrammar()
-	//if err != nil {
-	//t.Error(err)
-	//}
-
-	//j, _ := json.Marshal(*g)
-	//fmt.Println(string(j))
 }
 
 func displaySliceDiff[T any](got []T, want []T) string {
