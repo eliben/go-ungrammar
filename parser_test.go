@@ -3,6 +3,7 @@ package ungrammar
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
@@ -53,6 +54,16 @@ func TestParserTable(t *testing.T) {
 			    'tok'
 			  | Rule '*'`,
 			[]string{`x: Seq(lab:Rule, 'tok')`, `Rule: Alt('tok', Seq(Rule, '*'))`}},
+
+		// Expected parsing of ungrammar.ungrammar
+		{
+			readFileOrPanic("ungrammar.ungrammar"),
+			[]string{
+				`Grammar: Rep(Node)`,
+				`Node: Seq(name:'ident', '=', Rule)`,
+				`Rule: Alt('ident', 'token_ident', Rep(Rule), Seq(Rule, Rep(Seq('|', Rule))), Seq(Rule, '?'), Seq(Rule, '*'), Seq('(', Rule, ')'), Seq(label:'ident', ':', Rule))`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -80,31 +91,40 @@ func grammarToStrings(g *Grammar) []string {
 	return ss
 }
 
-// Check that we can read/parse ungrammar.ungrammar with some basic sanity
-// checking tests.
-func TestUngrammarFile(t *testing.T) {
-	contents, err := os.ReadFile("./ungrammar.ungrammar")
+// readFileOrPanic reads the given file's contents and returns them as a string.
+// In case of an error, it panics.
+func readFileOrPanic(filename string) string {
+	contents, err := os.ReadFile(filename)
 	if err != nil {
-		t.Error(err)
+		panic(err)
 	}
+	return string(contents)
+}
 
+// Check that we can read/parse the full rust.ungrammar with some basic sanity
+// checking tests.
+func TestRustUngrammarFile(t *testing.T) {
+	contents := readFileOrPanic(filepath.Join("testdata", "rust.ungrammar"))
 	p := newParser(string(contents))
 	g, err := p.parseGrammar()
 	if err != nil {
 		t.Error(err)
 	}
+	rules := grammarToStrings(g)
 
-	// TODO: use grammarToStrings here for a real test... or just add it as one
-	// of the table tests somehow??
-	// abstract away the grammar --> string thing and use it here too,
-	// instead of this!
-	if len(g.Rules) != 3 {
-		t.Errorf("grammar got %v rules, want 3", len(g.Rules))
+	// Sanity check: the expected number of rules, and the first and last rules
+	// match (note that they are first/last in string-sorted order).
+	if len(rules) != 143 {
+		t.Errorf("grammar got %v rules, want 143", len(g.Rules))
 	}
 
-	ruleAlt := g.Rules["Rule"].(*Alt)
-	if len(ruleAlt.Rules) != 8 {
-		t.Errorf("Rule got %v rules, want 8", len(ruleAlt.Rules))
+	want0 := `Abi: Seq('extern', Opt('string'))`
+	if rules[0] != want0 {
+		t.Errorf("rule 0 got %v, want %v", rules[0], want0)
+	}
+	want142 := `YieldExpr: Seq(Rep(Attr), 'yield', Opt(Expr))`
+	if rules[142] != want142 {
+		t.Errorf("rule 142 got %v, want %v", rules[142], want142)
 	}
 }
 
