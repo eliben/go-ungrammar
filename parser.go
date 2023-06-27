@@ -17,7 +17,8 @@ func newParser(buf string) *parser {
 		errs: nil,
 	}
 
-	p.advance()
+	p.tok = p.lex.nextToken()
+	p.nextTok = p.lex.nextToken()
 	return p
 }
 
@@ -99,10 +100,13 @@ func (p *parser) parseSeq() Rule {
 		p.emitError(p.tok.loc, fmt.Sprintf("expected rule, got %v", p.tok.value))
 		return nil
 	}
-	seq := []Rule{p.parseSingleRule()}
+	seq := []Rule{sr}
 
-	for sr != nil {
+	for {
 		sr = p.parseSingleRule()
+		if sr == nil {
+			break
+		}
 		seq = append(seq, sr)
 	}
 	if len(seq) == 1 {
