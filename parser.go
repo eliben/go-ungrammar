@@ -140,7 +140,7 @@ func (p *parser) parseSingleRule() Rule {
 		return &Opt{atom}
 	} else if p.tok.name == STAR {
 		p.advance()
-		return &Opt{atom}
+		return &Rep{atom}
 	}
 	return atom
 }
@@ -156,8 +156,9 @@ func (p *parser) parseSingleRuleAtom() Rule {
 		if p.nextTok.name == EQ {
 			return nil
 		} else if p.nextTok.name == COLON {
-			labelTok := p.tok
-			// This is a labeled rule and we've parsed "lalel:", now parse the rule.
+			labelTok := p.advance()
+			// This is a labeled rule and the label is now in labelTok.
+			// Skip the colon.
 			p.advance()
 			r := p.parseSingleRule()
 			if r == nil {

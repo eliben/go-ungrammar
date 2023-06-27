@@ -111,7 +111,7 @@ func (alt *Alt) String() string {
 	for _, r := range alt.Rules {
 		parts = append(parts, r.String())
 	}
-	return fmt.Sprintf("Alt(%v)", strings.Join(parts, " | "))
+	return fmt.Sprintf("Alt(%v)", strings.Join(parts, ", "))
 }
 
 func (opt *Opt) String() string {

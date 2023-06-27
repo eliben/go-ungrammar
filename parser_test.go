@@ -7,12 +7,20 @@ import (
 	"testing"
 )
 
+// Tests parsing without errors
 func TestParserTable(t *testing.T) {
 	var tests = []struct {
 		input     string
 		wantRules []string
 	}{
-		{`testrule = node 'tok'`, []string{`testrule: Seq(node, 'tok')`}},
+		{`x = mynode`, []string{`x: mynode`}},
+		{`x = (mynode)`, []string{`x: mynode`}},
+		{`x = mynode*`, []string{`x: Rep(mynode)`}},
+		{`x = mynode?`, []string{`x: Opt(mynode)`}},
+		{`x = 'atok'`, []string{`x: 'atok'`}},
+		{`x = lab:mynode`, []string{`x: lab:mynode`}},
+		{`x = node 'tok'`, []string{`x: Seq(node, 'tok')`}},
+		{`x = foo | bar`, []string{`x: Alt(foo, bar)`}},
 	}
 
 	for _, tt := range tests {
