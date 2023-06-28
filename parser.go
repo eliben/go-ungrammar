@@ -27,11 +27,13 @@ func (p *parser) parseGrammar() (*Grammar, error) {
 	locs := make(map[string]location)
 	for !p.eof() {
 		name, location, rule := p.parseNamedRule()
-		if _, found := rules[name]; found {
-			p.emitError(location, fmt.Sprintf("duplicate rule name %v", name))
+		if rule != nil {
+			if _, found := rules[name]; found {
+				p.emitError(location, fmt.Sprintf("duplicate rule name %v", name))
+			}
+			rules[name] = rule
+			locs[name] = location
 		}
-		rules[name] = rule
-		locs[name] = location
 	}
 
 	grammar := &Grammar{
@@ -101,6 +103,7 @@ func (p *parser) parseSeq() Rule {
 	sr := p.parseSingleRule()
 	if sr == nil {
 		p.emitError(p.tok.loc, fmt.Sprintf("expected rule, got %v", p.tok.value))
+		p.synchronize()
 		return nil
 	}
 	seq := []Rule{sr}
@@ -148,7 +151,7 @@ func (p *parser) parseSingleRule() Rule {
 	return atom
 }
 
-// parseSingleRuleAtom parser a single rule atom - either a node, token, a
+// parseSingleRuleAtom parses a single rule atom - either a node, token, a
 // labeled rule, or a rule in parentheses. See the comment on parseSingleRule
 // for the grammar ambiguity this has to handle.
 func (p *parser) parseSingleRuleAtom() Rule {

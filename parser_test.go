@@ -121,10 +121,14 @@ func TestParseErrors(t *testing.T) {
 		wantErrors []string
 	}{
 		// Missing alternation content, partial tree created with error
-		{`x = a | | b`, []string{`x: Alt(a, <nil>, b)`}, []string{"1:9: expected rule, got |"}},
+		{`x = a | | b`, []string{`x: Alt(a, <nil>)`}, []string{"1:9: expected rule, got |"}},
 
 		// Missing closing ')' before new rule, but both rules created
 		{`x = ( a b t = foo`, []string{`t: foo`, `x: Seq(a, b)`}, []string{"1:11: expected ')', got t"}},
+
+		// Recovery after spurious '='
+		{`x = = foo`, []string{}, []string{"1:5: expected rule, got ="}},
+		{`x = = foo = y`, []string{`foo: y`}, []string{"1:5: expected rule, got ="}},
 
 		// Duplicate rule name
 		{`x = a b   x = y z`, []string{`x: Seq(y, z)`}, []string{`1:11: duplicate rule name x`}},
@@ -144,6 +148,9 @@ func TestParseErrors(t *testing.T) {
 
 			sort.Strings(tt.wantRules)
 			if !slicesEqual(gotRules, tt.wantRules) {
+				fmt.Println(len(gotRules), len(tt.wantRules))
+				fmt.Println(g.Rules, len(g.String()))
+				fmt.Printf("%q\n", g.String())
 				t.Errorf("rules mismatch got != want:\n%v", displaySliceDiff(gotRules, tt.wantRules))
 			}
 
@@ -165,9 +172,8 @@ func TestParseErrors(t *testing.T) {
 
 // Test the message received when multiple errors are present
 func TestMultipleErrorsMessage(t *testing.T) {
-	// This has three errors:
+	// This has two errors:
 	//   - encountering the first |
-	//   - encountering `bar =` after the |
 	//   - unterminated '('
 	input := `
 foo = |
@@ -176,15 +182,32 @@ x = y`
 
 	p := newParser(input)
 	_, err := p.parseGrammar()
-	wantErr := "2:7: expected rule, got | (and 2 more errors)"
+	wantErr := "2:7: expected rule, got | (and 1 more errors)"
 	if err.Error() != wantErr {
 		t.Errorf("got %v, want %v", err.Error(), wantErr)
+	}
+}
+
+// A single isolated test useful for debugging the parser.
+func TestIsolated(t *testing.T) {
+	input := `x = = foo = x`
+	p := newParser(input)
+	g, err := p.parseGrammar()
+
+	if len(g.Rules) != 1 {
+		t.Errorf("got %v rules, want 1", len(g.Rules))
+	}
+	if err == nil {
+		t.Error("got no error, want error")
 	}
 }
 
 // grammarToStrings takes a Grammar's string representation and splits it into
 // a sorted slice of strings (one per top-level rule) suitable for testing.
 func grammarToStrings(g *Grammar) []string {
+	if len(g.String()) == 0 {
+		return []string{}
+	}
 	ss := strings.Split(strings.TrimRight(g.String(), "\n"), "\n")
 	sort.Strings(ss)
 	return ss
@@ -199,8 +222,6 @@ func readFileOrPanic(filename string) string {
 	}
 	return string(contents)
 }
-
-// TODO test errors, including lexer errors
 
 // displaySliceDiff displays a diff between two slices in a way that's
 // readable in test output.
