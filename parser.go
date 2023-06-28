@@ -24,16 +24,19 @@ func newParser(buf string) *parser {
 
 func (p *parser) parseGrammar() (*Grammar, error) {
 	rules := make(map[string]Rule)
+	locs := make(map[string]location)
 	for !p.eof() {
-		name, rule := p.parseNamedRule()
+		name, location, rule := p.parseNamedRule()
 		if _, found := rules[name]; found {
-			p.emitError(rule.Location(), fmt.Sprintf("duplicate rule name %v", name))
+			p.emitError(location, fmt.Sprintf("duplicate rule name %v", name))
 		}
 		rules[name] = rule
+		locs[name] = location
 	}
 
 	grammar := &Grammar{
-		Rules: rules,
+		Rules:   rules,
+		NameLoc: locs,
 	}
 
 	if len(p.errs) > 0 {
@@ -62,20 +65,20 @@ func (p *parser) eof() bool {
 }
 
 // parseNamedRule parses a top-level named rule: Node '=' <rule>, and returns
-// its name and the rule itself. It returns an empty name and rule if the
-// parser doesn't currently point to a rule.
-func (p *parser) parseNamedRule() (string, Rule) {
+// its name, the location of the name and the rule itself. It returns an empty
+// name and rule if the parser doesn't currently point to a rule.
+func (p *parser) parseNamedRule() (string, location, Rule) {
 	if p.tok.name == NODE {
-		nodeName := p.tok.value
+		tok := p.tok
 		p.advance()
 		if p.tok.name == EQ {
 			p.advance()
 			rule := p.parseAlt()
-			return nodeName, rule
+			return tok.value, tok.loc, rule
 		}
 	}
 	p.synchronize()
-	return "", nil
+	return "", location{}, nil
 }
 
 // parseAlt parses a top-level rule, the LHS of Node '=' <Rule>. It's

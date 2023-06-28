@@ -6,7 +6,11 @@ import (
 )
 
 type Grammar struct {
+	// Rules maps ruleName --> Rule
 	Rules map[string]Rule
+
+	// NameLoc maps ruleName --> its location in the input
+	NameLoc map[string]location
 }
 
 type Rule interface {

@@ -110,6 +110,8 @@ func TestRustUngrammarFile(t *testing.T) {
 	}
 }
 
+// TODO: Test locations (including the new top-level names locations)
+
 func TestParseErrors(t *testing.T) {
 	var tests = []struct {
 		input      string
@@ -121,6 +123,11 @@ func TestParseErrors(t *testing.T) {
 
 		// Missing closing ')' before new rule, but both rules created
 		{`x = ( a b t = foo`, []string{`t: foo`, `x: Seq(a, b)`}, []string{"1:11: expected ')', got t"}},
+
+		// Duplicate rule name
+		{`x = a b   x = y z`, []string{`x: Seq(y, z)`}, []string{`1:11: duplicate rule name x`}},
+
+		// TODO: do two errors
 	}
 
 	for _, tt := range tests {
@@ -147,6 +154,25 @@ func TestParseErrors(t *testing.T) {
 				t.Errorf("errors mismatch got != want:\n%v", displaySliceDiff(gotErrors, tt.wantErrors))
 			}
 		})
+	}
+}
+
+// Test the message received when multiple errors are present
+func TestMultipleErrorsMessage(t *testing.T) {
+	// This has three errors:
+	//   - encountering the first |
+	//   - encountering `bar =` after the |
+	//   - unterminated '('
+	input := `
+foo = |
+bar = ( joe
+x = y`
+
+	p := newParser(input)
+	_, err := p.parseGrammar()
+	wantErr := "2:7: expected rule, got | (and 2 more errors)"
+	if err.Error() != wantErr {
+		t.Errorf("got %v, want %v", err.Error(), wantErr)
 	}
 }
 
