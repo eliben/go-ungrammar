@@ -111,19 +111,42 @@ func TestRustUngrammarFile(t *testing.T) {
 }
 
 func TestParseErrors(t *testing.T) {
-	{
-		input := `x = a | | b`
-		p := newParser(input)
-		g, err := p.parseGrammar()
-		fmt.Println(g)
-		fmt.Println(err)
+	var tests = []struct {
+		input      string
+		wantRules  []string
+		wantErrors []string
+	}{
+		// Missing alternation content, partial tree created with error
+		{`x = a | | b`, []string{`x: Alt(a, <nil>, b)`}, []string{"1:9: expected rule, got |"}},
+
+		// Missing closing ')' before new rule, but both rules created
+		{`x = ( a b t = foo`, []string{`t: foo`, `x: Seq(a, b)`}, []string{"1:11: expected ')', got t"}},
 	}
-	{
-		input := `x = ( a b t = foo`
-		p := newParser(input)
-		g, err := p.parseGrammar()
-		fmt.Println(g)
-		fmt.Println(err)
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			p := newParser(tt.input)
+			g, err := p.parseGrammar()
+			gotRules := grammarToStrings(g)
+
+			sort.Strings(tt.wantRules)
+			if !slicesEqual(gotRules, tt.wantRules) {
+				t.Errorf("rules mismatch got != want:\n%v", displaySliceDiff(gotRules, tt.wantRules))
+			}
+
+			if err == nil {
+				t.Error("expected errors, got nil")
+			}
+			errlist := err.(ErrorList)
+			var gotErrors []string
+			for _, err := range errlist {
+				gotErrors = append(gotErrors, err.Error())
+			}
+
+			if !slicesEqual(gotErrors, tt.wantErrors) {
+				t.Errorf("errors mismatch got != want:\n%v", displaySliceDiff(gotErrors, tt.wantErrors))
+			}
+		})
 	}
 }
 
