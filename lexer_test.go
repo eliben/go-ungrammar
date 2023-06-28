@@ -87,6 +87,7 @@ func TestLexerError(t *testing.T) {
 	}{
 		{`hello $ bye`, 1, `unknown token starting with '$'`, location{1, 7}},
 		{`hello | $no`, 2, `unknown token starting with '$'`, location{1, 9}},
+		{`hello | $no @`, 4, `unknown token starting with '@'`, location{1, 13}},
 		{`he '202020`, 1, `unterminated token literal`, location{1, 4}},
 	}
 

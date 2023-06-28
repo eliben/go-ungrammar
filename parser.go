@@ -123,7 +123,7 @@ func (p *parser) parseSeq() Rule {
 // a '?' or '*' quantifier. It can return nil if there are no more single
 // rules to parse.
 //
-// The Ungrammar grammr contains an ambiguity, since named rules are not
+// The Ungrammar grammar contains an ambiguity, since named rules are not
 // terminated explicitly, consider:
 //
 //	Foo = Bar Baz
@@ -203,6 +203,9 @@ func (p *parser) parseSingleRuleAtom() Rule {
 		// Consume ')'
 		p.advance()
 		return r
+	case ERROR:
+		p.emitError(p.tok.loc, p.tok.value)
+		p.synchronize()
 	}
 	return nil
 }

@@ -112,6 +112,8 @@ func TestRustUngrammarFile(t *testing.T) {
 
 // TODO: Test locations (including the new top-level names locations)
 
+// Test error handling and parser recovery. The parser will try to make progress
+// even in face of errors, returning partial results while errors persist.
 func TestParseErrors(t *testing.T) {
 	var tests = []struct {
 		input      string
@@ -126,6 +128,10 @@ func TestParseErrors(t *testing.T) {
 
 		// Duplicate rule name
 		{`x = a b   x = y z`, []string{`x: Seq(y, z)`}, []string{`1:11: duplicate rule name x`}},
+
+		// Lexer errors
+		{`x = a @   y = t`, []string{`x: a`, `y: t`}, []string{"1:7: unknown token starting with '@'"}},
+		{`x = a b 'two   y = t`, []string{`x: Seq(a, b)`}, []string{"1:9: unterminated token literal"}},
 
 		// TODO: do two errors
 	}
