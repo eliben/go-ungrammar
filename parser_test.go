@@ -83,26 +83,8 @@ func TestParserTable(t *testing.T) {
 	}
 }
 
-// grammarToStrings takes a Grammar's string representation and splits it into
-// a sorted slice of strings (one per top-level rule) suitable for testing.
-func grammarToStrings(g *Grammar) []string {
-	ss := strings.Split(strings.TrimRight(g.String(), "\n"), "\n")
-	sort.Strings(ss)
-	return ss
-}
-
-// readFileOrPanic reads the given file's contents and returns them as a string.
-// In case of an error, it panics.
-func readFileOrPanic(filename string) string {
-	contents, err := os.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
-	return string(contents)
-}
-
-// Check that we can read/parse the full rust.ungrammar with some basic sanity
-// checking tests.
+// Check that we can read/parse the full rust.ungrammar without errors, and
+// perform basic sanity checking.
 func TestRustUngrammarFile(t *testing.T) {
 	contents := readFileOrPanic(filepath.Join("testdata", "rust.ungrammar"))
 	p := newParser(string(contents))
@@ -128,8 +110,45 @@ func TestRustUngrammarFile(t *testing.T) {
 	}
 }
 
+func TestParseErrors(t *testing.T) {
+	{
+		input := `x = a | | b`
+		p := newParser(input)
+		g, err := p.parseGrammar()
+		fmt.Println(g)
+		fmt.Println(err)
+	}
+	{
+		input := `x = ( a b t = foo`
+		p := newParser(input)
+		g, err := p.parseGrammar()
+		fmt.Println(g)
+		fmt.Println(err)
+	}
+}
+
+// grammarToStrings takes a Grammar's string representation and splits it into
+// a sorted slice of strings (one per top-level rule) suitable for testing.
+func grammarToStrings(g *Grammar) []string {
+	ss := strings.Split(strings.TrimRight(g.String(), "\n"), "\n")
+	sort.Strings(ss)
+	return ss
+}
+
+// readFileOrPanic reads the given file's contents and returns them as a string.
+// In case of an error, it panics.
+func readFileOrPanic(filename string) string {
+	contents, err := os.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+	return string(contents)
+}
+
 // TODO test errors, including lexer errors
 
+// displaySliceDiff displays a diff between two slices in a way that's
+// readable in test output.
 func displaySliceDiff[T any](got []T, want []T) string {
 	maxLen := 0
 	for _, g := range got {
@@ -155,7 +174,6 @@ func displaySliceDiff[T any](got []T, want []T) string {
 		if swant != sgot {
 			sign = "!="
 		}
-
 		fmt.Fprintf(&sb, "%-*v  %v  %v\n", maxLen, sgot, sign, swant)
 	}
 	return sb.String()

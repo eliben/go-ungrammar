@@ -81,13 +81,13 @@ func (rep *Rep) Location() location {
 func (g *Grammar) String() string {
 	var sb strings.Builder
 	for name, rule := range g.Rules {
-		fmt.Fprintf(&sb, "%s: %s\n", name, rule)
+		fmt.Fprintf(&sb, "%s: %s\n", name, ruleString(rule))
 	}
 	return sb.String()
 }
 
 func (lbl *Labeled) String() string {
-	return fmt.Sprintf("%s:%s", lbl.Label, lbl.Rule)
+	return fmt.Sprintf("%s:%s", lbl.Label, ruleString(lbl.Rule))
 }
 
 func (node *Node) String() string {
@@ -101,7 +101,7 @@ func (tok *Token) String() string {
 func (seq *Seq) String() string {
 	var parts []string
 	for _, r := range seq.Rules {
-		parts = append(parts, r.String())
+		parts = append(parts, ruleString(r))
 	}
 	return fmt.Sprintf("Seq(%v)", strings.Join(parts, ", "))
 }
@@ -109,15 +109,24 @@ func (seq *Seq) String() string {
 func (alt *Alt) String() string {
 	var parts []string
 	for _, r := range alt.Rules {
-		parts = append(parts, r.String())
+		parts = append(parts, ruleString(r))
 	}
 	return fmt.Sprintf("Alt(%v)", strings.Join(parts, ", "))
 }
 
 func (opt *Opt) String() string {
-	return fmt.Sprintf("Opt(%s)", opt.Rule.String())
+	return fmt.Sprintf("Opt(%s)", ruleString(opt.Rule))
 }
 
 func (rep *Rep) String() string {
-	return fmt.Sprintf("Rep(%s)", rep.Rule.String())
+	return fmt.Sprintf("Rep(%s)", ruleString(rep.Rule))
+}
+
+// ruleString returns a Rule's String() representation, or <nil> if r == nil.
+func ruleString(r Rule) string {
+	if r == nil {
+		return "<nil>"
+	} else {
+		return r.String()
+	}
 }
