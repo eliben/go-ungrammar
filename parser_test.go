@@ -137,7 +137,8 @@ func TestParseErrors(t *testing.T) {
 		{`x = a @   y = t`, []string{`x: a`, `y: t`}, []string{"1:7: unknown token starting with '@'"}},
 		{`x = a b 'two   y = t`, []string{`x: Seq(a, b)`}, []string{"1:9: unterminated token literal"}},
 
-		// TODO: do two errors
+		// Multiple errors
+		{`x = a @ y = t z = ( k`, []string{`x: a`, `y: t`, `z: k`}, []string{`1:7: unknown token starting with '@'`, `1:21: expected ')', got <end of input>`}},
 	}
 
 	for _, tt := range tests {
@@ -148,10 +149,8 @@ func TestParseErrors(t *testing.T) {
 
 			sort.Strings(tt.wantRules)
 			if !slicesEqual(gotRules, tt.wantRules) {
-				fmt.Println(len(gotRules), len(tt.wantRules))
-				fmt.Println(g.Rules, len(g.String()))
-				fmt.Printf("%q\n", g.String())
 				t.Errorf("rules mismatch got != want:\n%v", displaySliceDiff(gotRules, tt.wantRules))
+
 			}
 
 			if err == nil {
@@ -164,6 +163,7 @@ func TestParseErrors(t *testing.T) {
 			}
 
 			if !slicesEqual(gotErrors, tt.wantErrors) {
+				fmt.Println(gotErrors, tt.wantErrors)
 				t.Errorf("errors mismatch got != want:\n%v", displaySliceDiff(gotErrors, tt.wantErrors))
 			}
 		})

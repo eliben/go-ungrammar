@@ -105,7 +105,7 @@ func (lex *lexer) nextToken() token {
 
 	rloc := lex.loc
 	if lex.r < 0 {
-		return token{EOF, "", rloc}
+		return token{EOF, "<end of input>", rloc}
 	} else if isIdChar(lex.r) {
 		return lex.scanNode()
 	}

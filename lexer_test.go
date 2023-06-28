@@ -38,7 +38,7 @@ someid
 		token{TOKEN, `tt'q`, location{6, 1}},
 		token{TOKEN, `tt\s`, location{6, 9}},
 		token{PIPE, "|", location{7, 1}},
-		token{EOF, "", location{8, 0}},
+		token{EOF, "<end of input>", location{8, 0}},
 	}
 
 	if len(wantToks) != len(toks) {
