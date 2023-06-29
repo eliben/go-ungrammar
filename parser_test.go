@@ -68,8 +68,8 @@ func TestParserTable(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			p := newParser(tt.input)
-			g, err := p.parseGrammar()
+			p := NewParser(tt.input)
+			g, err := p.ParseGrammar()
 			if err != nil {
 				t.Error(err)
 			}
@@ -87,8 +87,8 @@ func TestParserTable(t *testing.T) {
 // perform basic sanity checking.
 func TestRustUngrammarFile(t *testing.T) {
 	contents := readFileOrPanic(filepath.Join("testdata", "rust.ungrammar"))
-	p := newParser(string(contents))
-	g, err := p.parseGrammar()
+	p := NewParser(string(contents))
+	g, err := p.ParseGrammar()
 	if err != nil {
 		t.Error(err)
 	}
@@ -115,8 +115,8 @@ func TestLocations(t *testing.T) {
 x = foo | bar
 y = a b?`
 
-	p := newParser(input)
-	g, err := p.parseGrammar()
+	p := NewParser(input)
+	g, err := p.ParseGrammar()
 	if err != nil {
 		t.Error(err)
 	}
@@ -183,8 +183,8 @@ func TestParseErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			p := newParser(tt.input)
-			g, err := p.parseGrammar()
+			p := NewParser(tt.input)
+			g, err := p.ParseGrammar()
 			gotRules := grammarToStrings(g)
 
 			sort.Strings(tt.wantRules)
@@ -219,8 +219,8 @@ foo = |
 bar = ( joe
 x = y`
 
-	p := newParser(input)
-	_, err := p.parseGrammar()
+	p := NewParser(input)
+	_, err := p.ParseGrammar()
 	wantErr := "2:7: expected rule, got | (and 1 more errors)"
 	if err.Error() != wantErr {
 		t.Errorf("got %v, want %v", err.Error(), wantErr)
@@ -230,8 +230,8 @@ x = y`
 // A single isolated test useful for debugging the parser.
 func TestIsolated(t *testing.T) {
 	input := `x = = foo = x`
-	p := newParser(input)
-	g, err := p.parseGrammar()
+	p := NewParser(input)
+	g, err := p.ParseGrammar()
 
 	if len(g.Rules) != 1 {
 		t.Errorf("got %v rules, want 1", len(g.Rules))

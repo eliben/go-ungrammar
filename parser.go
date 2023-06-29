@@ -2,7 +2,9 @@ package ungrammar
 
 import "fmt"
 
-type parser struct {
+// Parser parses ungrammar syntax into a Grammar. Create a new parser with
+// NewParser, and then call its ParseGrammar method.
+type Parser struct {
 	lex *lexer
 
 	tok     token
@@ -11,8 +13,8 @@ type parser struct {
 	errs ErrorList
 }
 
-func newParser(buf string) *parser {
-	p := &parser{
+func NewParser(buf string) *Parser {
+	p := &Parser{
 		lex:  newLexer(buf),
 		errs: nil,
 	}
@@ -22,7 +24,7 @@ func newParser(buf string) *parser {
 	return p
 }
 
-func (p *parser) parseGrammar() (*Grammar, error) {
+func (p *Parser) ParseGrammar() (*Grammar, error) {
 	rules := make(map[string]Rule)
 	locs := make(map[string]location)
 	for !p.eof() {
@@ -50,7 +52,7 @@ func (p *parser) parseGrammar() (*Grammar, error) {
 
 // advance returns the current token and consumes it (the next call to advance
 // will return the next token in the stream, etc.)
-func (p *parser) advance() token {
+func (p *Parser) advance() token {
 	tok := p.tok
 	if tok.name == EOF {
 		return tok
@@ -62,14 +64,14 @@ func (p *parser) advance() token {
 	return tok
 }
 
-func (p *parser) eof() bool {
+func (p *Parser) eof() bool {
 	return p.tok.name == EOF
 }
 
 // parseNamedRule parses a top-level named rule: Node '=' <rule>, and returns
 // its name, the location of the name and the rule itself. It returns an empty
 // name and rule if the parser doesn't currently point to a rule.
-func (p *parser) parseNamedRule() (string, location, Rule) {
+func (p *Parser) parseNamedRule() (string, location, Rule) {
 	if p.tok.name == NODE {
 		tok := p.tok
 		p.advance()
@@ -85,7 +87,7 @@ func (p *parser) parseNamedRule() (string, location, Rule) {
 
 // parseAlt parses a top-level rule, the LHS of Node '=' <Rule>. It's
 // potentially a '|'-seprated alternation of sequences.
-func (p *parser) parseAlt() Rule {
+func (p *Parser) parseAlt() Rule {
 	alts := []Rule{p.parseSeq()}
 	for p.tok.name == PIPE {
 		p.advance()
@@ -99,7 +101,7 @@ func (p *parser) parseAlt() Rule {
 }
 
 // parseSeq parses a sequence of single rules.
-func (p *parser) parseSeq() Rule {
+func (p *Parser) parseSeq() Rule {
 	sr := p.parseSingleRule()
 	if sr == nil {
 		p.emitError(p.tok.loc, fmt.Sprintf("expected rule, got %v", p.tok.value))
@@ -136,7 +138,7 @@ func (p *parser) parseSeq() Rule {
 // shouldn't be in the sequence, but rather start a new named rule. When we
 // parse a single rule, we look ahead for a '=' and bail if it's found, leaving
 // "Bob =" to a higher-level parser. In that case, nil is returned.
-func (p *parser) parseSingleRule() Rule {
+func (p *Parser) parseSingleRule() Rule {
 	atom := p.parseSingleRuleAtom()
 	if atom == nil {
 		return nil
@@ -154,7 +156,7 @@ func (p *parser) parseSingleRule() Rule {
 // parseSingleRuleAtom parses a single rule atom - either a node, token, a
 // labeled rule, or a rule in parentheses. See the comment on parseSingleRule
 // for the grammar ambiguity this has to handle.
-func (p *parser) parseSingleRuleAtom() Rule {
+func (p *Parser) parseSingleRuleAtom() Rule {
 	switch p.tok.name {
 	case NODE:
 		// Lookahead to see if this is actually the beginning of the next top-level
@@ -215,7 +217,7 @@ func (p *parser) parseSingleRuleAtom() Rule {
 
 // synchronize consumes tokens until it finds a safe place to restart parsing.
 // It tries to find the next Node '=' where a new named rule can be defined.
-func (p *parser) synchronize() {
+func (p *Parser) synchronize() {
 	for !p.eof() {
 		if p.tok.name == NODE && p.nextTok.name == EQ {
 			return
@@ -224,6 +226,6 @@ func (p *parser) synchronize() {
 	}
 }
 
-func (p *parser) emitError(loc location, msg string) {
+func (p *Parser) emitError(loc location, msg string) {
 	p.errs.Add(fmt.Errorf("%s: %s", loc, msg))
 }
