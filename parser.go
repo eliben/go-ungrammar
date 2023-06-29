@@ -72,8 +72,8 @@ func (p *Parser) eof() bool {
 // its name, the location of the name and the rule itself. It returns an empty
 // name and rule if the parser doesn't currently point to a rule.
 func (p *Parser) parseNamedRule() (string, location, Rule) {
-	if p.tok.name == NODE {
-		tok := p.tok
+	tok := p.tok
+	if tok.name == NODE {
 		p.advance()
 		if p.tok.name == EQ {
 			p.advance()
@@ -81,6 +81,9 @@ func (p *Parser) parseNamedRule() (string, location, Rule) {
 			return tok.value, tok.loc, rule
 		}
 	}
+
+	// If we're here, a named rule was not found.
+	p.emitError(tok.loc, fmt.Sprintf("expected named rule, got %v", tok.value))
 	p.synchronize()
 	return "", location{}, nil
 }

@@ -160,6 +160,9 @@ func TestParseErrors(t *testing.T) {
 		wantRules  []string
 		wantErrors []string
 	}{
+		// Missing a named rule
+		{`foo bar`, []string{}, []string{"1:1: expected named rule, got foo"}},
+
 		// Missing alternation content, partial tree created with error
 		{`x = a | | b`, []string{`x: Alt(a, <nil>)`}, []string{"1:9: expected rule, got |"}},
 
