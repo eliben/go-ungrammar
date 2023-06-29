@@ -25,21 +25,18 @@ func main() {
 		log.Fatal("Error parsing ungrammar:", err)
 	}
 
-	grammarToJSON(os.Stdout, grammar)
-}
-
-func grammarToJSON(w io.Writer, grammar *ungrammar.Grammar) {
-	jrules := make(map[string]any)
+	grammarObj := make(object)
 	for name, rule := range grammar.Rules {
-		jrules[name] = ruleToObj(rule)
+		grammarObj[name] = ruleToObj(rule)
 	}
 
-	enc := json.NewEncoder(w)
-	if err := enc.Encode(jrules); err != nil {
+	enc := json.NewEncoder(os.Stdout)
+	if err := enc.Encode(grammarObj); err != nil {
 		log.Fatal("Error encoding to JSON:", err)
 	}
 }
 
+// object is a map with arbitrary values suitable for JSON encoding.
 type object map[string]any
 
 func ruleToObj(r ungrammar.Rule) object {
