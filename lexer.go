@@ -23,6 +23,10 @@ type location struct {
 	column int
 }
 
+func (loc location) String() string {
+	return fmt.Sprintf("%v:%v", loc.line, loc.column)
+}
+
 type tokenName int
 
 const (
@@ -59,7 +63,7 @@ var tokenNames = [...]string{
 }
 
 func (tok token) String() string {
-	return fmt.Sprintf("token{%s, '%s', (%v, %v)}", tokenNames[tok.name], tok.value, tok.loc.line, tok.loc.column)
+	return fmt.Sprintf("token{%s, '%s', %s}", tokenNames[tok.name], tok.value, tok.loc)
 }
 
 // lexer provides lexical scanning of text into Ungrammar tokens.

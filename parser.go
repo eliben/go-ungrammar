@@ -225,5 +225,5 @@ func (p *parser) synchronize() {
 }
 
 func (p *parser) emitError(loc location, msg string) {
-	p.errs.Add(fmt.Errorf("%d:%d: %s", loc.line, loc.column, msg))
+	p.errs.Add(fmt.Errorf("%s: %s", loc, msg))
 }

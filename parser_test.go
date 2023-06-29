@@ -110,7 +110,47 @@ func TestRustUngrammarFile(t *testing.T) {
 	}
 }
 
-// TODO: Test locations (including the new top-level names locations)
+func TestLocations(t *testing.T) {
+	input := `
+x = foo | bar
+y = a b?`
+
+	p := newParser(input)
+	g, err := p.parseGrammar()
+	if err != nil {
+		t.Error(err)
+	}
+
+	xrule := g.Rules["x"]
+	xalt := xrule.(*Alt)
+	yrule := g.Rules["y"]
+	yseq := yrule.(*Seq)
+	yseq1opt := yseq.Rules[1].(*Opt)
+
+	var tests = []struct {
+		name          string
+		loc           location
+		wantLocString string
+	}{
+		{"x name", g.NameLoc["x"], "2:1"},
+		{"x rule", xrule.Location(), "2:5"},
+		{"y name", g.NameLoc["y"], "3:1"},
+		{"x alt 0", xalt.Rules[0].Location(), "2:5"},
+		{"x alt 1", xalt.Rules[1].Location(), "2:11"},
+		{"y seq 0", yseq.Rules[0].Location(), "3:5"},
+		{"y seq 1", yseq.Rules[1].Location(), "3:7"},
+		{"y seq 1 opt", yseq1opt.Location(), "3:7"},
+		{"y seq 1 opt rule", yseq1opt.Rule.Location(), "3:7"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.loc.String() != tt.wantLocString {
+				t.Errorf("got %v, want %v", tt.loc.String(), tt.wantLocString)
+			}
+		})
+	}
+}
 
 // Test error handling and parser recovery. The parser will try to make progress
 // even in face of errors, returning partial results while errors persist.
@@ -150,7 +190,6 @@ func TestParseErrors(t *testing.T) {
 			sort.Strings(tt.wantRules)
 			if !slicesEqual(gotRules, tt.wantRules) {
 				t.Errorf("rules mismatch got != want:\n%v", displaySliceDiff(gotRules, tt.wantRules))
-
 			}
 
 			if err == nil {
