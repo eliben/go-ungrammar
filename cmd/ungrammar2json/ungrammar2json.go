@@ -1,3 +1,10 @@
+// This program parses an ungrammar file and dumps the ungrammar into JSON
+// format that any tool/language can read.
+//
+// It reads stdin and writes to stdout.
+//
+// The emitted JSON is has minimal whitespace and is not formatted; pipe through
+// `jq .` for a pretty/formatted output.
 package main
 
 import (
