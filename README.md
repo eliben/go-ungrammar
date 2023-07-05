@@ -1,6 +1,6 @@
 # go-ungrammar
 
-Ungrammar implementation and API in Go. Ungrammar is a "schema" for
+Ungrammar implementation and API in Go. Ungrammar is a DSL for
 [concrete syntax trees (CST)](https://en.wikipedia.org/wiki/Parse_tree). For some
 background on CSTs and how they relate to ASTs,
 see [this blog post](https://eli.thegreenplace.net/2009/02/16/abstract-vs-concrete-syntax-trees/).
