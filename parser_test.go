@@ -64,6 +64,20 @@ func TestParserTable(t *testing.T) {
 				`Rule: Alt('ident', 'token_ident', Rep(Rule), Seq(Rule, Rep(Seq('|', Rule))), Seq(Rule, '?'), Seq(Rule, '*'), Seq('(', Rule, ')'), Seq(label:'ident', ':', Rule))`,
 			},
 		},
+
+		{
+			readFileOrPanic(filepath.Join("testdata", "exprlang.ungrammar")),
+			[]string{
+				`AssignStmt: Seq('set', 'ident', '=', Expr)`,
+				`BinExpr: Seq(lhs:Expr, op:Alt('+', '-', '*', '/', '%'), rhs:Expr)`,
+				`Expr: Alt(Literal, UnaryExpr, ParenExpr, BinExpr)`,
+				`Literal: Alt('int_literal', 'ident')`,
+				`ParenExpr: Seq('(', Expr, ')')`,
+				`Program: Rep(Stmt)`,
+				`Stmt: Alt(AssignStmt, Expr)`,
+				`UnaryExpr: Seq(op:Alt('-', '+'), Expr)`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
