@@ -75,7 +75,7 @@ func TestParserTable(t *testing.T) {
 				`ParenExpr: Seq('(', Expr, ')')`,
 				`Program: Rep(Stmt)`,
 				`Stmt: Alt(AssignStmt, Expr)`,
-				`UnaryExpr: Seq(op:Alt('-', '+'), Expr)`,
+				`UnaryExpr: Seq(op:Alt('+', '-'), Expr)`,
 			},
 		},
 	}

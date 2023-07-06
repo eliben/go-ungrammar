@@ -1,10 +1,8 @@
-// ungrammar for a simple expression language
+// Ungrammar for a simple expression language
 
-Program =
-  Stmt *
+Program = Stmt*
 
-Stmt =
-  AssignStmt | Expr
+Stmt = AssignStmt | Expr
 
 AssignStmt = 'set' 'ident' '=' Expr
 
@@ -14,8 +12,7 @@ Expr =
   | ParenExpr
   | BinExpr
 
-UnaryExpr =
-  op:('-' | '+') Expr
+UnaryExpr = op:('+' | '-') Expr
 
 ParenExpr = '(' Expr ')'
 
