@@ -4,7 +4,7 @@ import "fmt"
 
 // ErrorList represents multiple parse errors reported by the parser on a given
 // source. It's loosely modeled on scanner.ErrorList in the Go standard library.
-// errorList implements the error interface.
+// ErrorList implements the error interface.
 type ErrorList []error
 
 func (el *ErrorList) Add(err error) {
