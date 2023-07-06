@@ -258,6 +258,29 @@ func TestIsolated(t *testing.T) {
 	}
 }
 
+func TestIsolatedErrors(t *testing.T) {
+	input := `
+foo = @
+bar = ( joe
+x = y`
+	p := NewParser(input)
+	g, err := p.ParseGrammar()
+
+	gotRules := grammarToStrings(g)
+
+	if len(gotRules) != 2 {
+		t.Errorf("got %v rules, want 2", len(gotRules))
+	}
+	errlist := err.(ErrorList)
+	var gotErrors []string
+	for _, err := range errlist {
+		gotErrors = append(gotErrors, err.Error())
+	}
+	if len(errlist) != 3 {
+		t.Errorf("got %v errors, want 3", len(errlist))
+	}
+}
+
 // grammarToStrings takes a Grammar's string representation and splits it into
 // a sorted slice of strings (one per top-level rule) suitable for testing.
 func grammarToStrings(g *Grammar) []string {
