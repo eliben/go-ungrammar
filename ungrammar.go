@@ -1,5 +1,5 @@
 // go-ungrammar: Ungrammar Concrete Syntax Tree (CST).
-//
+
 // Eli Bendersky [https://eli.thegreenplace.net]
 // This code is in the public domain.
 package ungrammar

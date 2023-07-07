@@ -1,6 +1,6 @@
 // go-ungrammar: Go version compatibility code.
 // This file should be replaced by the standard library once Go 1.21 is out.
-//
+
 // Eli Bendersky [https://eli.thegreenplace.net]
 // This code is in the public domain.
 package ungrammar
