@@ -25,6 +25,14 @@ A?           -- optional (zero or one)
 label:A      -- label hint for naming
 ```
 
+For some concrete examples, look at files in the `testdata` directory.
+
 ## Usage
 
-TODO: embed from example_test here
+Package documentation is available at TODO.
+
+Usage example:
+
+https://github.com/eliben/go-ungrammar/blob/229d0dd20660980d5069ed676c5c728a9fda5723/example_test.go#L13-L31
+
+For somewhat more sophisticated usage, see the `cmd/ungrammar2json` command.
