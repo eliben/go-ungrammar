@@ -1,3 +1,7 @@
+// go-ungrammar: lexer tests.
+//
+// Eli Bendersky [https://eli.thegreenplace.net]
+// This code is in the public domain.
 package ungrammar
 
 import (

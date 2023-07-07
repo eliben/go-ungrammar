@@ -5,6 +5,9 @@
 //
 // The emitted JSON is has minimal whitespace and is not formatted; pipe through
 // `jq .` for a pretty/formatted output.
+//
+// Eli Bendersky [https://eli.thegreenplace.net]
+// This code is in the public domain.
 package main
 
 import (
