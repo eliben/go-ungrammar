@@ -1,7 +1,8 @@
 // go-ungrammar: parser.
-
+//
 // Eli Bendersky [https://eli.thegreenplace.net]
 // This code is in the public domain.
+
 package ungrammar
 
 import "fmt"

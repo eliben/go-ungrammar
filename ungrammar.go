@@ -1,7 +1,10 @@
 // go-ungrammar: Ungrammar Concrete Syntax Tree (CST).
-
+//
 // Eli Bendersky [https://eli.thegreenplace.net]
 // This code is in the public domain.
+
+// package ungrammar provides a parser and representation for Ungrammar
+// concrete syntax trees.
 package ungrammar
 
 import (
