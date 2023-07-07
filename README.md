@@ -29,7 +29,7 @@ For some concrete examples, look at files in the `testdata` directory.
 
 ## Usage
 
-Package documentation is available at TODO.
+[![Go Reference](https://pkg.go.dev/badge/github.com/eliben/go-ungrammar.svg)](https://pkg.go.dev/github.com/eliben/go-ungrammar)
 
 Usage example:
 
