@@ -10,7 +10,7 @@ import (
 	"github.com/eliben/go-ungrammar"
 )
 
-func ExampleParseAndExamine() {
+func ExampleParser_ParseGrammar() {
 	input := `
 Foo = Bar Baz
 Baz = ( Kay Jay )* | 'id'`
