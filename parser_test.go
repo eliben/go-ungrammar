@@ -61,7 +61,7 @@ func TestParserTable(t *testing.T) {
 
 		// Expected parsing of ungrammar.ungrammar
 		{
-			readFileOrPanic("ungrammar.ungrammar"),
+			readFileOrPanic(filepath.Join("testdata", "ungrammar.ungrammar")),
 			[]string{
 				`Grammar: Rep(Node)`,
 				`Node: Seq(name:'ident', '=', Rule)`,
