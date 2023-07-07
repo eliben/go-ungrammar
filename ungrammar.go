@@ -1,4 +1,4 @@
-// go-ungrammar: Ungrammar trees.
+// go-ungrammar: Ungrammar Concrete Syntax Tree (CST).
 //
 // Eli Bendersky [https://eli.thegreenplace.net]
 // This code is in the public domain.
@@ -9,14 +9,25 @@ import (
 	"strings"
 )
 
+// Grammar represents a parsed Ungrammar file. The input is represented as
+// a mapping between strings (rule names on the left-hand-side of Ungrammar
+// rules) and rules (CST).
+// For example, if we have a rule like "Foo = Bar Baz", the Rules map will
+// contain a mapping between the string "Foo" and the CST
+// Seq(Node(Bar), Node(Baz)).
 type Grammar struct {
 	// Rules maps ruleName --> Rule
 	Rules map[string]Rule
 
-	// NameLoc maps ruleName --> its location in the input
+	// NameLoc maps ruleName --> its location in the input, for accurate error
+	// reporting. Rules carry their own locations, but since names are just
+	// strings, locations are kept here.
 	NameLoc map[string]location
 }
 
+// Rule is the interface defining an Ungrammar CST subtree. At runtime, a value
+// implemeting the Rule interface will have a concrete type which is one of the
+// exported types in this file.
 type Rule interface {
 	Location() location
 	String() string

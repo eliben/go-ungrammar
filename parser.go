@@ -17,6 +17,7 @@ type Parser struct {
 	errs ErrorList
 }
 
+// NewParser creates a new parser with the given string input.
 func NewParser(buf string) *Parser {
 	p := &Parser{
 		lex:  newLexer(buf),
@@ -28,6 +29,10 @@ func NewParser(buf string) *Parser {
 	return p
 }
 
+// ParseGrammar takes the input the Parser was initialized with and parses it
+// into a Grammar. It returns an ErrorList which collects all the errors
+// encountered during parsing, and in case of errors the returned Grammar may be
+// partial.
 func (p *Parser) ParseGrammar() (*Grammar, error) {
 	rules := make(map[string]Rule)
 	locs := make(map[string]location)
