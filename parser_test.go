@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -93,7 +94,7 @@ func TestParserTable(t *testing.T) {
 			gotRules := grammarToStrings(g)
 
 			sort.Strings(tt.wantRules)
-			if !slicesEqual(gotRules, tt.wantRules) {
+			if !slices.Equal(gotRules, tt.wantRules) {
 				t.Errorf("mismatch got != want:\n%v", displaySliceDiff(gotRules, tt.wantRules))
 			}
 		})
@@ -208,7 +209,7 @@ func TestParseErrors(t *testing.T) {
 			gotRules := grammarToStrings(g)
 
 			sort.Strings(tt.wantRules)
-			if !slicesEqual(gotRules, tt.wantRules) {
+			if !slices.Equal(gotRules, tt.wantRules) {
 				t.Errorf("rules mismatch got != want:\n%v", displaySliceDiff(gotRules, tt.wantRules))
 			}
 
@@ -221,7 +222,7 @@ func TestParseErrors(t *testing.T) {
 				gotErrors = append(gotErrors, err.Error())
 			}
 
-			if !slicesEqual(gotErrors, tt.wantErrors) {
+			if !slices.Equal(gotErrors, tt.wantErrors) {
 				fmt.Println(gotErrors, tt.wantErrors)
 				t.Errorf("errors mismatch got != want:\n%v", displaySliceDiff(gotErrors, tt.wantErrors))
 			}
@@ -311,13 +312,13 @@ func displaySliceDiff[T any](got []T, want []T) string {
 	maxLen := 0
 	for _, g := range got {
 		gs := fmt.Sprintf("%v", g)
-		maxLen = intMax(maxLen+1, len(gs))
+		maxLen = slices.Max([]int{maxLen + 1, len(gs)})
 	}
 
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "%-*v      %v\n", maxLen, "got", "want")
 
-	for i := 0; i < intMax(len(got), len(want)); i++ {
+	for i := 0; i < slices.Max([]int{len(got), len(want)}); i++ {
 		var sgot string
 		if i < len(got) {
 			sgot = fmt.Sprintf("%v", got[i])
