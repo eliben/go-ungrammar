@@ -312,13 +312,13 @@ func displaySliceDiff[T any](got []T, want []T) string {
 	maxLen := 0
 	for _, g := range got {
 		gs := fmt.Sprintf("%v", g)
-		maxLen = slices.Max([]int{maxLen + 1, len(gs)})
+		maxLen = max(maxLen + 1, len(gs))
 	}
 
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "%-*v      %v\n", maxLen, "got", "want")
 
-	for i := 0; i < slices.Max([]int{len(got), len(want)}); i++ {
+	for i := 0; i < max(len(got), len(want)); i++ {
 		var sgot string
 		if i < len(got) {
 			sgot = fmt.Sprintf("%v", got[i])
